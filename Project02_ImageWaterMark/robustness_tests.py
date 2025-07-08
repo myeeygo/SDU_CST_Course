@@ -23,3 +23,14 @@ class RobustnessTester:
         extracted_watermark = self.watermarking_system.extract(scaled_image)
         ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
         return ncc
+    
+    # 图像裁剪函数
+    def test_cropping(self, watermarked_image: np.ndarray, crop_ratio: float) -> float:
+        height, width = watermarked_image.shape[:2]
+        crop_size = int(min(height, width) * crop_ratio)
+        start_x = (width - crop_size) // 2
+        start_y = (height - crop_size) // 2
+        cropped_image = watermarked_image[start_y:start_y+crop_size, start_x:start_x+crop_size]
+        extracted_watermark = self.watermarking_system.extract(cropped_image)
+        ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
+        return ncc
