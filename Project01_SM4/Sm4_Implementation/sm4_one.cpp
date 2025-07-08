@@ -11,8 +11,8 @@ public:
         FK[2] = 0x677D9197;
         FK[3] = 0xB27022DC;
     };
-    void encrypt(unsigned char* plaintext, unsigned char* ciphertext, unsigned char* key);
-    void decrypt(unsigned char* ciphertext, unsigned char* plaintext, unsigned char* key);
+    void encrypt(unsigned char* plaintext[16], unsigned char* ciphertext[16], unsigned char* key[16]);
+    void decrypt(unsigned char* ciphertext[16], unsigned char* plaintext[16], unsigned char* key[16]);
 
 private:
     static const unsigned char SM4_SBOX[256];
@@ -42,6 +42,34 @@ private:
     unsigned int linear_transform_L(unsigned int input) {
         unsigned int res=input ^ rotateLeft(input, 2) ^rotateLeft(input, 10) ^rotateLeft(input, 18) ^rotateLeft(input, 24);
         return res;
+    }
+
+    // 线性变换 L' (用于密钥扩展)
+    unsigned int linear_transform_Lprime(unsigned int input) {
+        unsigned int res=input ^ rotateLeft(input, 13) ^rotateLeft(input, 23);
+        return res;
+    }
+   
+
+    // 密钥扩展
+    void keySchedule(const unsigned char key[16], unsigned int roundKeys[32]) {
+        unsigned int K[36];
+
+        // 初始化 K0-K3
+        for (int i = 0; i < 4; ++i) {
+            K[i] = (key[4 * i] << 24) | (key[4 * i + 1] << 16) |
+                (key[4 * i + 2] << 8) | key[4 * i + 3];
+            K[i] ^= FK[i]; // 异或固定参数
+        }
+
+        // 生成轮密钥
+        for (int i = 0; i < 32; ++i) {
+            unsigned int T = K[i + 1] ^ K[i + 2] ^ K[i + 3] ^ CK[i];
+            T = tau_transform(T);
+            T = linear_transform_Lprime(T);
+            K[i + 4] = K[i] ^ T;
+            roundKeys[i] = K[i + 4];
+        }
     }
 
 
