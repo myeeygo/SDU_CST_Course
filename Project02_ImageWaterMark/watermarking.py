@@ -72,3 +72,38 @@ class WatermarkingSystem:
         cv2.imwrite(output_path, watermarked_bgr)
         
         return watermarked_bgr
+    
+    # 提取水印
+    def extract(self, watermarked_image: np.ndarray) -> np.ndarray:
+        if self.original_dct is None or self.watermark is None:
+            raise RuntimeError("请先嵌入水印再进行提取")
+            
+        if watermarked_image.shape[:2] != self.original_shape:
+            watermarked_image = cv2.resize(
+                watermarked_image, 
+                (self.original_shape[1], self.original_shape[0])
+            )
+        
+        watermarked_ycrcb = cv2.cvtColor(watermarked_image, cv2.COLOR_BGR2YCrCb)
+        y, _, _ = cv2.split(watermarked_ycrcb)
+        
+        dct_y = cv2.dct(np.float32(y))
+        
+        height, width = dct_y.shape     # 选择中频区域嵌入水印
+        center_x, center_y = width // 2, height // 2
+        radius = min(center_x, center_y) // 2
+        
+        y_indices, x_indices = np.ogrid[:height, :width]
+        mask = ((x_indices - center_x)**2 + (y_indices - center_y)**2) <= radius**2
+        
+        extracted_watermark = np.zeros_like(self.watermark, dtype=np.float32)
+        
+        for i in range(height):
+            for j in range(width):
+                if mask[i, j]:
+                    if np.abs(self.original_dct[i, j]) > 1e-4:
+                        diff = dct_y[i, j] - self.original_dct[i, j]
+                        extracted_watermark[i, j] = diff / (self.alpha * np.abs(self.original_dct[i, j]))
+        
+        extracted_watermark = np.sign(extracted_watermark)
+        return extracted_watermark
