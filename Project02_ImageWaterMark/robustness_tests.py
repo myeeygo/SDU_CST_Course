@@ -45,3 +45,10 @@ class RobustnessTester:
         extracted_watermark = self.watermarking_system.extract(brightened_image)
         ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
         return ncc
+    
+     # 图像对比度
+    def test_contrast(self, watermarked_image: np.ndarray, alpha: float) -> float:
+        contrasted_image = cv2.convertScaleAbs(watermarked_image, alpha=alpha, beta=0)
+        extracted_watermark = self.watermarking_system.extract(contrasted_image)
+        ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
+        return ncc
