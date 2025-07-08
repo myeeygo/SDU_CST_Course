@@ -72,6 +72,36 @@ private:
         }
     }
 
+    // 轮函数 F
+    unsigned int F(unsigned int X0, unsigned int X1, unsigned int X2, unsigned int X3, unsigned int rk) {
+        unsigned int T = X1 ^ X2 ^ X3 ^ rk;
+        T = tau_transform(T);
+        T = linear_transform_L(T);
+        T ^= X0;
+        return T;
+    }
+    // 处理数据块
+    void processBlock(const unsigned char input[16], unsigned char output[16], const unsigned int roundKeys[32]) {
+        unsigned int X[36];
+        // 初始化
+        for (int i = 0; i < 4; ++i) {
+            X[i] = (input[4 * i] << 24) | (input[4 * i + 1] << 16) |
+                (input[4 * i + 2] << 8) | input[4 * i + 3];
+        }
+        // 32轮迭代
+        for (int i = 0; i < 32; ++i) {
+            X[i + 4] = F(X[i], X[i + 1], X[i + 2], X[i + 3], roundKeys[i]);
+        }
+        // 输出反序
+        for (int i = 0; i < 4; ++i) {
+            output[4 * i] = (X[35 - i] >> 24) & 0xFF;
+            output[4 * i + 1] = (X[35 - i] >> 16) & 0xFF;
+            output[4 * i + 2] = (X[35 - i] >> 8) & 0xFF;
+            output[4 * i + 3] = X[35 - i] & 0xFF;
+        }
+        }
+    
+
 
 };
 // SM4 S盒 
