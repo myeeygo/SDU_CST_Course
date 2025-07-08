@@ -146,3 +146,50 @@ const unsigned int SM4::SM4_CK[32] = {
     0xA0A7AEB5, 0xBCC3CAD1, 0xD8DFE6ED, 0xF4FB0209,
     0x10171E25, 0x2C333A41, 0x484F565D, 0x646B7279
 };
+
+
+// 测试函数
+int testFunc() {
+    SM4 sm4;
+    // 测试数据
+    unsigned char key[16] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    unsigned char plaintext[16] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    unsigned char ciphertext[16];
+    unsigned char decrypted[16];
+    // 加密
+    sm4.encrypt(plaintext, ciphertext, key);
+    std::cout << "Ciphertext: ";
+    for (int i = 0; i < 16; ++i) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0')
+            << (int)ciphertext[i] << " ";
+    }
+    std::cout << std::endl;
+    // 解密
+    sm4.decrypt(ciphertext, decrypted, key);
+    std::cout << "Decrypted:  ";
+    for (int i = 0; i < 16; ++i) {
+        std::cout << std::hex << std::setw(2) << std::setfill('0')
+            << (int)decrypted[i] << " ";
+    }
+    std::cout << std::endl;
+    // 验证解密结果
+    if (memcmp(plaintext, decrypted, 16) == 0) {
+        std::cout << "Encryption and Decryption successful!" << std::endl;
+    }
+    else {
+        std::cout << "Encryption or Decryption failed!" << std::endl;
+    }
+    return 0;
+}
+
+// 主函数
+int main() {
+    testFunc();
+    return 0;
+}
