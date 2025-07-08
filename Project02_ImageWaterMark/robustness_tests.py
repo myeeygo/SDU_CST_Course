@@ -66,3 +66,12 @@ class RobustnessTester:
         extracted_watermark = self.watermarking_system.extract(noisy_image)
         ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
         return ncc
+        
+    # JPEG压缩测试
+    def test_jpeg_compression(self, watermarked_image: np.ndarray, quality: int) -> float:
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+        result, encimg = cv2.imencode('.jpg', watermarked_image, encode_param)
+        decimg = cv2.imdecode(encimg, 1)
+        extracted_watermark = self.watermarking_system.extract(decimg)
+        ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
+        return ncc
