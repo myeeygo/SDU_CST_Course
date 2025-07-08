@@ -35,3 +35,40 @@ class WatermarkingSystem:
             return self.process_custom_watermark(shape)
         else:
             return np.random.choice([-1, 1], size=shape[:2])
+        
+    
+    # 嵌入水印：读取图像，转换为YCbCr，分离Y通道，进行DCT变换，
+    # 嵌入水印，进行逆DCT变换，合并通道，转换为BGR，保存图像
+    def embed(self, image_path: str, output_path: str) -> np.ndarray:
+        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+        if image is None:
+            raise FileNotFoundError(f"无法读取图像文件 {image_path}")
+            
+        self.original_shape = image.shape[:2]
+        
+        image_ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
+        y, cr, cb = cv2.split(image_ycrcb)
+        
+        self.watermark = self.generate_watermark(y.shape)
+        
+        dct_y = cv2.dct(np.float32(y))
+        
+        self.original_dct = dct_y.copy()
+        
+        height, width = dct_y.shape
+        center_x, center_y = width // 2, height // 2
+        radius = min(center_x, center_y) // 2
+        
+        y_indices, x_indices = np.ogrid[:height, :width]
+        mask = ((x_indices - center_x)**2 + (y_indices - center_y)**2) <= radius**2
+        
+        dct_y[mask] += self.alpha * self.watermark[mask] * np.abs(dct_y[mask])
+        
+        watermarked_y = cv2.idct(dct_y)
+        watermarked_y = np.uint8(np.clip(watermarked_y, 0, 255))
+        
+        watermarked_ycrcb = cv2.merge([watermarked_y, cr, cb])
+        watermarked_bgr = cv2.cvtColor(watermarked_ycrcb, cv2.COLOR_YCrCb2BGR)
+        cv2.imwrite(output_path, watermarked_bgr)
+        
+        return watermarked_bgr
