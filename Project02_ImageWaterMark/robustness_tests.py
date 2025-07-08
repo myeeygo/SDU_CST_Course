@@ -52,3 +52,17 @@ class RobustnessTester:
         extracted_watermark = self.watermarking_system.extract(contrasted_image)
         ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
         return ncc
+    
+    # 图像噪声
+    def test_noise(self, watermarked_image: np.ndarray, noise_level: float) -> float:
+        row, col, ch = watermarked_image.shape
+        mean = 0
+        var = noise_level
+        sigma = var ** 0.5
+        gauss = np.random.normal(mean, sigma, (row, col, ch))
+        gauss = gauss.reshape(row, col, ch)
+        noisy_image = watermarked_image + gauss
+        noisy_image = np.clip(noisy_image, 0, 255).astype(np.uint8)
+        extracted_watermark = self.watermarking_system.extract(noisy_image)
+        ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
+        return ncc
