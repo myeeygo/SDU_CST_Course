@@ -15,3 +15,11 @@ class RobustnessTester:
         extracted_watermark = self.watermarking_system.extract(rotated_image)
         ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
         return ncc
+
+    # 图像缩放
+    def test_scaling(self, watermarked_image: np.ndarray, scale: float) -> float:
+        scaled_image = cv2.resize(watermarked_image, None, fx=scale, fy=scale)
+        scaled_image = cv2.resize(scaled_image, (watermarked_image.shape[1], watermarked_image.shape[0]))
+        extracted_watermark = self.watermarking_system.extract(scaled_image)
+        ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
+        return ncc
