@@ -20,8 +20,30 @@ private:
     unsigned char Sbox[256];
     unsigned int FK[4];
     unsigned int CK[32];
-    static const unsigned char SM4_SBOX[256];
-    static const unsigned int SM4_CK[32];
+
+    // 循环左移
+    unsigned int rotateLeft(unsigned int x, int n) {
+        unsigned int res = (x << n) | (x >> (32 - n));
+        return res;
+    }
+
+    // 非线性变换 τ
+    unsigned int tau_transform(unsigned int input) {
+        unsigned char bytes[4];
+        bytes[0] = Sbox[(input >> 24) & 0xFF];
+        bytes[1] = Sbox[(input >> 16) & 0xFF];
+        bytes[2] = Sbox[(input >> 8) & 0xFF];
+        bytes[3] = Sbox[input & 0xFF];
+        unsigned int res = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+        return res;
+    }
+            
+    // 线性变换 L
+    unsigned int linear_transform_L(unsigned int input) {
+        unsigned int res=input ^ rotateLeft(input, 2) ^rotateLeft(input, 10) ^rotateLeft(input, 18) ^rotateLeft(input, 24);
+        return res;
+    }
+
 
 };
 // SM4 S盒 
