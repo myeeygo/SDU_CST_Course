@@ -383,7 +383,8 @@ int main() {
 }
 
 /**
- * 实际运行输出：
+实际运行输出：
+
 ————————————————Traditional SM4 Function————————————————————
 Ciphertext: 68 1e df 34 d2 06 96 5e 86 b3 e9 4f 53 6e 42 46
 Decrypted:  01 23 45 67 89 ab cd ef fe dc ba 98 76 54 32 10
@@ -391,6 +392,6 @@ Decrypted:  01 23 45 67 89 ab cd ef fe dc ba 98 76 54 32 10
 ————————————————Optimized SM4 Function————————————————————
 Ciphertext: 68 1e df 34 d2 06 96 5e 86 b3 e9 4f 53 6e 42 46
 Decrypted:  01 23 45 67 89 ab cd ef fe dc ba 98 76 54 32 10
-[sm4Optimized]Encryption and Decryption successful!
+[sm4Optimized]Encryption and Decryption successful! 
 
  */ 
