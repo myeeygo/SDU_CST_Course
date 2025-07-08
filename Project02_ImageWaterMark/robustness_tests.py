@@ -33,4 +33,15 @@ class RobustnessTester:
         cropped_image = watermarked_image[start_y:start_y+crop_size, start_x:start_x+crop_size]
         extracted_watermark = self.watermarking_system.extract(cropped_image)
         ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
+        return ncc   
+    
+    # 图像亮度
+    def test_brightness(self, watermarked_image: np.ndarray, value: int) -> float:
+        hsv = cv2.cvtColor(watermarked_image, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+        v = np.clip(v + value, 0, 255).astype(hsv.dtype)
+        hsv = cv2.merge([h, s, v])
+        brightened_image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        extracted_watermark = self.watermarking_system.extract(brightened_image)
+        ncc = self.watermarking_system.calculate_ncc(self.watermarking_system.watermark, extracted_watermark)
         return ncc
