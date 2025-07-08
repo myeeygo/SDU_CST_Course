@@ -107,3 +107,18 @@ class WatermarkingSystem:
         
         extracted_watermark = np.sign(extracted_watermark)
         return extracted_watermark
+    
+    # 计算NCC
+    def calculate_ncc(self, original_watermark: np.ndarray, extracted_watermark: np.ndarray) -> float:
+        valid_mask = (original_watermark != 0) & (extracted_watermark != 0)
+        
+        if np.any(valid_mask):
+            orig_valid = original_watermark[valid_mask]
+            extr_valid = extracted_watermark[valid_mask]
+            
+            numerator = np.sum(orig_valid * extr_valid)
+            denominator = np.sqrt(np.sum(orig_valid**2) * np.sum(extr_valid**2))
+            
+            if denominator > 1e-10: # 避免除以0
+                return numerator / denominator
+        return 0.0
