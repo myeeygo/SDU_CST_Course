@@ -11,15 +11,26 @@ public:
         FK[2] = 0x677D9197;
         FK[3] = 0xB27022DC;
     };
-    void encrypt(unsigned char* plaintext[16], unsigned char* ciphertext[16], unsigned char* key[16]);
-    void decrypt(unsigned char* ciphertext[16], unsigned char* plaintext[16], unsigned char* key[16]);
+    void encrypt(unsigned char plaintext[16], unsigned char ciphertext[16], unsigned char key[16]){
+        unsigned int roundKeys[32];
+        keySchedule(key, roundKeys); // 轮密钥
+        processBlock(plaintext, ciphertext, roundKeys);
+    };
+    void decrypt(unsigned char ciphertext[16], unsigned char plaintext[16], unsigned char key[16]){
+        unsigned int roundKeys[32];
+        keySchedule(key, roundKeys); // 轮密钥
+        // 解轮密钥逆序使用
+        unsigned int reverseKeys[32];
+        for (int i = 0; i < 32; ++i) {
+            reverseKeys[i] = roundKeys[31 - i];
+        }
+        processBlock(ciphertext, plaintext, reverseKeys);
+    };
 
 private:
     static const unsigned char SM4_SBOX[256];
     static const unsigned int SM4_CK[32];
-    // unsigned char Sbox[256];
     unsigned int FK[4];
-    // unsigned int CK[32];
 
     // 循环左移
     unsigned int rotateLeft(unsigned int x, int n) {
