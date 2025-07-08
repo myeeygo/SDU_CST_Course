@@ -17,9 +17,9 @@ public:
 private:
     static const unsigned char SM4_SBOX[256];
     static const unsigned int SM4_CK[32];
-    unsigned char Sbox[256];
+    // unsigned char Sbox[256];
     unsigned int FK[4];
-    unsigned int CK[32];
+    // unsigned int CK[32];
 
     // 循环左移
     unsigned int rotateLeft(unsigned int x, int n) {
@@ -30,10 +30,10 @@ private:
     // 非线性变换 τ
     unsigned int tau_transform(unsigned int input) {
         unsigned char bytes[4];
-        bytes[0] = Sbox[(input >> 24) & 0xFF];
-        bytes[1] = Sbox[(input >> 16) & 0xFF];
-        bytes[2] = Sbox[(input >> 8) & 0xFF];
-        bytes[3] = Sbox[input & 0xFF];
+        bytes[0] = SM4_SBOX[(input >> 24) & 0xFF];
+        bytes[1] = SM4_SBOX[(input >> 16) & 0xFF];
+        bytes[2] = SM4_SBOX[(input >> 8) & 0xFF];
+        bytes[3] = SM4_SBOX[input & 0xFF];
         unsigned int res = (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
         return res;
     }
@@ -64,7 +64,7 @@ private:
 
         // 生成轮密钥
         for (int i = 0; i < 32; ++i) {
-            unsigned int T = K[i + 1] ^ K[i + 2] ^ K[i + 3] ^ CK[i];
+            unsigned int T = K[i + 1] ^ K[i + 2] ^ K[i + 3] ^ SM4_CK[i];
             T = tau_transform(T);
             T = linear_transform_Lprime(T);
             K[i + 4] = K[i] ^ T;
