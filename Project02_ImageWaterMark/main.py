@@ -40,6 +40,22 @@ def main():
         extracted_watermark_vis = np.uint8((extracted_watermark + 1) * 127.5)
         cv2.imwrite('extracted_watermark.png', extracted_watermark_vis)
            
+
+        # 初始化鲁棒性测试器
+        tester = RobustnessTester(watermarking)
+        
+        # 测试各种攻击
+        attacks = {
+            "Rotate 30 degrees": lambda img: tester.test_rotation(img, 30),
+            "Scale by 0.8 times": lambda img: tester.test_scaling(img, 0.8),
+            "Crop by 20%": lambda img: tester.test_cropping(img, 0.8),
+            "Brightness +50": lambda img: tester.test_brightness(img, 50),
+            "Contrast 1.5": lambda img: tester.test_contrast(img, 1.5),
+            "Gaussian noise(a=20)": lambda img: tester.test_noise(img, 20),
+            "JPEG compression(Q=70)": lambda img: tester.test_jpeg_compression(img, 70),
+        }
+        
+
     except Exception as e:
         print(f"程序执行出错: {str(e)}")
         traceback.print_exc()
