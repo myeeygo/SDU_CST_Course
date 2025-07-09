@@ -153,3 +153,6 @@ def main():
     except Exception as e:
         print(f"程序执行出错: {str(e)}")
         traceback.print_exc()
+
+if __name__ == "__main__":
+    main()
