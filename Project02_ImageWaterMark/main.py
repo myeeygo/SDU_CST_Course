@@ -54,6 +54,63 @@ def main():
             "Gaussian noise(a=20)": lambda img: tester.test_noise(img, 20),
             "JPEG compression(Q=70)": lambda img: tester.test_jpeg_compression(img, 70),
         }
+
+        
+        # 执行测试并显示结果
+        results = {}
+        for attack_name, attack_func in attacks.items():
+            try:
+                ncc = attack_func(watermarked_image)
+                results[attack_name] = ncc
+                print(f"After {attack_name}, NCC: {ncc:.4f}")
+                
+                # 保存攻击后的图像
+                attacked_image = np.copy(watermarked_image)
+                if attack_name == "Rotate 30 degrees":
+                    height, width = attacked_image.shape[:2]
+                    center = (width // 2, height // 2)
+                    rotation_matrix = cv2.getRotationMatrix2D(center, 30, 1.0)
+                    attacked_image = cv2.warpAffine(
+                        attacked_image, rotation_matrix, (width, height),
+                        flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
+                    )
+                elif attack_name == "Scale by 0.8 times":
+                    attacked_image = cv2.resize(attacked_image, None, fx=0.8, fy=0.8)
+                    attacked_image = cv2.resize(attacked_image, (watermarked_image.shape[1], watermarked_image.shape[0]))
+                elif attack_name == "Crop by 20%": 
+                    height, width = attacked_image.shape[:2]
+                    crop_size = int(min(height, width) * 0.8)
+                    start_x = (width - crop_size) // 2
+                    start_y = (height - crop_size) // 2
+                    attacked_image = attacked_image[start_y:start_y+crop_size, start_x:start_x+crop_size]
+                    attacked_image = cv2.resize(attacked_image, (width, height))
+                elif attack_name =="Brightness +50": 
+                    hsv = cv2.cvtColor(attacked_image, cv2.COLOR_BGR2HSV)
+                    h, s, v = cv2.split(hsv)
+                    v = np.clip(v + 50, 0, 255).astype(hsv.dtype)
+                    attacked_image = cv2.cvtColor(cv2.merge([h, s, v]), cv2.COLOR_HSV2BGR)
+                elif attack_name == "Contrast 1.5": 
+                    attacked_image = cv2.convertScaleAbs(attacked_image, alpha=1.5, beta=0)
+                elif attack_name == "Gaussian noise(a=20)": 
+                    row, col, ch = attacked_image.shape
+                    gauss = np.random.normal(0, 20, (row, col, ch))
+                    attacked_image = np.clip(attacked_image + gauss, 0, 255).astype(np.uint8)
+                elif attack_name == "JPEG compression(Q=70)":
+                    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 70]
+                    _, encimg = cv2.imencode('.jpg', attacked_image, encode_param)
+                    attacked_image = cv2.imdecode(encimg, 1)
+                
+                cv2.imwrite(f'attacked_{attack_name.replace(" ", "_")}.png', attacked_image)
+                
+                # 提取并保存攻击后的水印
+                extracted_after_attack = watermarking.extract(attacked_image)
+                extracted_after_attack_vis = np.uint8((extracted_after_attack + 1) * 127.5)
+                cv2.imwrite(f'extracted_after_{attack_name.replace(" ", "_")}.png', extracted_after_attack_vis)
+                
+            except Exception as e:
+                print(f"执行 {attack_name} 测试时出错: {str(e)}")
+                results[attack_name] = 0
+        
         
 
     except Exception as e:
