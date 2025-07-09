@@ -111,6 +111,43 @@ def main():
                 print(f"执行 {attack_name} 测试时出错: {str(e)}")
                 results[attack_name] = 0
         
+        # 可视化测试结果
+        plt.figure(figsize=(10, 6))
+        plt.bar(results.keys(), results.values())
+        plt.ylim(0, 1.1)
+        plt.title('水印鲁棒性测试结果')
+        plt.xlabel('攻击类型')
+        plt.ylabel('归一化相关系数(NCC)')
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        plt.savefig('robustness_test_results.png')
+        # plt.show()
+        
+        # 可视化原始图像、水印图像和提取的水印
+        plt.figure(figsize=(15, 5))
+        
+        # 原始图像
+        plt.subplot(131)
+        original_image = cv2.imread(original_image_path)
+        plt.imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB))
+        plt.title('原始图像')
+        plt.axis('off')
+        
+        # 水印图像
+        plt.subplot(132)
+        plt.imshow(cv2.cvtColor(watermarked_image, cv2.COLOR_BGR2RGB))
+        plt.title('水印图像')
+        plt.axis('off')
+        
+        # 提取的水印
+        plt.subplot(133)
+        plt.imshow(extracted_watermark, cmap='gray')
+        plt.title(f'提取的水印 (NCC: {ncc_original:.4f})')
+        plt.axis('off')
+        
+        plt.tight_layout()
+        plt.savefig('watermarking_demo.png')
+        # plt.show()
         
 
     except Exception as e:
