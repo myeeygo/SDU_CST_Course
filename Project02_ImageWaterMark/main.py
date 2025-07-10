@@ -14,22 +14,22 @@ plt.rcParams['axes.unicode_minus'] = False
 def main():
     try:
         # 初始化水印系统 - 指定自定义水印图像路径
-        custom_watermark_path = 'custom_waterMark06.png'  
+        custom_watermark_path = './result/custom_waterMark06.png'  
         watermarking = WatermarkingSystem(alpha=0.5, watermark_image_path=custom_watermark_path)
         
         # 嵌入水印
-        original_image_path = 'Original.png'
+        original_image_path = './result/Original.png'
         if not os.path.exists(original_image_path):
             raise FileNotFoundError(f"原始图像文件 {original_image_path} 不存在")
             
-        watermarked_image_path = 'WaterMark.png'
+        watermarked_image_path = './result/WaterMark.png'
         watermarked_image = watermarking.embed(original_image_path, watermarked_image_path)
         
         # 保存原始水印模式
         original_watermark = watermarking.watermark
         
         original_watermark_vis = np.uint8((original_watermark + 1) * 127.5)
-        cv2.imwrite('original_watermark.png', original_watermark_vis)
+        cv2.imwrite('./result/original_watermark.png', original_watermark_vis)
         
         # 提取水印
         extracted_watermark = watermarking.extract(watermarked_image)
@@ -38,7 +38,7 @@ def main():
         
         # 保存提取的水印
         extracted_watermark_vis = np.uint8((extracted_watermark + 1) * 127.5)
-        cv2.imwrite('extracted_watermark.png', extracted_watermark_vis)
+        cv2.imwrite('./result/extracted_watermark.png', extracted_watermark_vis)
            
 
         # 初始化鲁棒性测试器
@@ -100,12 +100,12 @@ def main():
                     _, encimg = cv2.imencode('.jpg', attacked_image, encode_param)
                     attacked_image = cv2.imdecode(encimg, 1)
                 
-                cv2.imwrite(f'attacked_{attack_name.replace(" ", "_")}.png', attacked_image)
+                cv2.imwrite(f'./result/attacked_{attack_name.replace(" ", "_")}.png', attacked_image)
                 
                 # 提取并保存攻击后的水印
                 extracted_after_attack = watermarking.extract(attacked_image)
                 extracted_after_attack_vis = np.uint8((extracted_after_attack + 1) * 127.5)
-                cv2.imwrite(f'extracted_after_{attack_name.replace(" ", "_")}.png', extracted_after_attack_vis)
+                cv2.imwrite(f'./result/extracted_after_{attack_name.replace(" ", "_")}.png', extracted_after_attack_vis)
                 
             except Exception as e:
                 print(f"执行 {attack_name} 测试时出错: {str(e)}")
@@ -120,7 +120,7 @@ def main():
         plt.ylabel('归一化相关系数(NCC)')
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
-        plt.savefig('robustness_test_results.png')
+        plt.savefig('./result/robustness_test_results.png')
         # plt.show()
         
         # 可视化原始图像、水印图像和提取的水印
@@ -146,7 +146,7 @@ def main():
         plt.axis('off')
         
         plt.tight_layout()
-        plt.savefig('watermarking_demo.png')
+        plt.savefig('./result/watermarking_demo.png')
         # plt.show()
         
 
