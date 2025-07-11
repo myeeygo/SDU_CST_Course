@@ -229,12 +229,9 @@ class SM2:
 if __name__ == '__main__':
     # 生成密钥对
     private_key, public_key = SM2.generate_key()
-    message = "202000460012"
+    message = "this is atest mesage"
     ID = "1234567812345678"
     
-    print("=" * 50)
-    print("SM2算法演示")
-    print("=" * 50)
     print(f"消息: {message}")
     print(f"公钥: {public_key}")
     
