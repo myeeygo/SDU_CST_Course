@@ -1,0 +1,3 @@
+﻿  sm3Optimized.cpp
+D:\18403\MyWork\CST_SummerCourse\Project\SDU_CST_Course\Project04_sm3\sm3_Optimized\sm3Optimized.cpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  sm3_Optimized.vcxproj -> D:\18403\MyWork\CST_SummerCourse\Project\SDU_CST_Course\Project04_sm3\sm3_Optimized\x64\Debug\sm3_Optimized.exe
