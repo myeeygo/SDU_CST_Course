@@ -341,3 +341,53 @@ void SM3Scalar(const uint8_t* data, size_t len, uint8_t digest[32]) {
     }
 }
 
+
+// 将哈希值转换为十六进制字符串
+std::string SM3Hex(const uint8_t* data, size_t len) {
+    uint8_t digest[32];
+    SM3(data, len, digest);
+
+    const char hex_chars[] = "0123456789abcdef";
+    std::string result;
+    result.reserve(64);
+
+    for (int i = 0; i < 32; i++) {
+        result += hex_chars[digest[i] >> 4];
+        result += hex_chars[digest[i] & 0x0F];
+    }
+
+    return result;
+}
+
+int main() {
+    // 测试数据
+    const size_t TEST_SIZE = 1024 *  10; // 10KB
+    uint8_t* test_data = new uint8_t[TEST_SIZE];
+    memset(test_data, 0x61, TEST_SIZE); // 填充 'a'
+
+    // 测试AVX2优化的SM3算法
+    auto start_avx2 = std::chrono::high_resolution_clock::now();
+    uint8_t digest_avx2[32];
+    for (int i = 0; i < 10; ++i) {
+        SM3(test_data, TEST_SIZE, digest_avx2);
+    }
+    auto end_avx2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration_avx2 = end_avx2 - start_avx2;
+
+    // 测试传统SM3算法
+    auto start_scalar = std::chrono::high_resolution_clock::now();
+    uint8_t digest_scalar[32];
+    for (int i = 0; i < 10; ++i) {
+        SM3Scalar(test_data, TEST_SIZE, digest_scalar);
+    }
+    auto end_scalar = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration_scalar = end_scalar - start_scalar;
+
+    // 输出结果
+    std::cout << "AVX2 Optimized SM3 Time: " << duration_avx2.count() << " seconds" << std::endl;
+    std::cout << "Traditional SM3 Time:     " << duration_scalar.count() << " seconds" << std::endl;
+    std::cout << "Speedup Ratio:            " << duration_scalar.count() / duration_avx2.count() << std::endl;
+
+    delete[] test_data;
+    return 0;
+}
