@@ -158,3 +158,74 @@ void SM3Compress(uint32_t* V, const uint32_t* W) {
     V[6] ^= G;
     V[7] ^= H;
 }
+
+// SM3哈希计算 (AVX2优化)
+void SM3(const uint8_t* data, size_t len, uint8_t digest[32]) {
+    // 初始状态 (常量)
+    uint32_t V[8] = {
+        0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600,
+        0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e
+    };
+
+    // 计算块数
+    size_t block_count = len / 64;
+    size_t remaining = len % 64;
+
+    // 处理完整块
+    for (size_t i = 0; i < block_count; i++) {
+        // 为消息扩展分配空间 (68+64=132个消息字)
+        uint32_t W[132];
+        MessageExpansionAVX2((const uint32_t*)(data + i * 64), W);
+        SM3Compress(V, W);
+    }
+
+    // 处理剩余数据
+    uint8_t last_block[128] = { 0 };
+    size_t total_bits = len * 8;
+
+    if (len > 0) {
+        // 复制剩余数据
+        memcpy(last_block, data + block_count * 64, remaining);
+
+        // 添加填充位
+        last_block[remaining] = 0x80;
+
+        // 添加消息长度 (大端)
+        if (remaining < 56) {
+            // 空间足够直接写入当前块
+            last_block[60] = (total_bits >> 24) & 0xFF;
+            last_block[61] = (total_bits >> 16) & 0xFF;
+            last_block[62] = (total_bits >> 8) & 0xFF;
+            last_block[63] = total_bits & 0xFF;
+
+            uint32_t W[132];
+            MessageExpansionAVX2((const uint32_t*)last_block, W);
+            SM3Compress(V, W);
+        }
+        else {
+            // 需要额外的块
+            last_block[60] = (total_bits >> 24) & 0xFF;
+            last_block[61] = (total_bits >> 16) & 0xFF;
+            last_block[62] = (total_bits >> 8) & 0xFF;
+            last_block[63] = total_bits & 0xFF;
+
+            uint32_t W1[132];
+            MessageExpansionAVX2((const uint32_t*)last_block, W1);
+            SM3Compress(V, W1);
+
+            // 第二个块全0，仅添加长度
+            memset(last_block, 0, 64);
+            uint32_t W2[132];
+            MessageExpansionAVX2((const uint32_t*)last_block, W2);
+            SM3Compress(V, W2);
+        }
+    }
+
+    // 输出最终结果
+    for (int i = 0; i < 8; i++) {
+        digest[i * 4 + 0] = (V[i] >> 24) & 0xFF;
+        digest[i * 4 + 1] = (V[i] >> 16) & 0xFF;
+        digest[i * 4 + 2] = (V[i] >> 8) & 0xFF;
+        digest[i * 4 + 3] = V[i] & 0xFF;
+    }
+}
