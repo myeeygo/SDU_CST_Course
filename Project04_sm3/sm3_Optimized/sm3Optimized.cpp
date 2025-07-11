@@ -229,3 +229,115 @@ void SM3(const uint8_t* data, size_t len, uint8_t digest[32]) {
         digest[i * 4 + 3] = V[i] & 0xFF;
     }
 }
+
+// 传统SM3消息扩展
+void MessageExpansionScalar(const uint32_t* block, uint32_t* W) {
+    // 复制初始16个消息字
+    for (int i = 0; i < 16; ++i) {
+        W[i] = block[i];
+    }
+
+    // 计算W16-W67
+    for (int j = 16; j < 68; ++j) {
+        W[j] = P1(W[j - 16] ^ W[j - 9] ^ ROTL32(W[j - 3], 15)) ^ ROTL32(W[j - 13], 7) ^ W[j - 6];
+    }
+
+    // 计算W'0-W'63
+    for (int j = 0; j < 64; ++j) {
+        W[j + 68] = W[j] ^ W[j + 4];
+    }
+}
+
+// 传统SM3压缩函数
+void SM3CompressScalar(uint32_t* V, const uint32_t* W) {
+    uint32_t A = V[0], B = V[1], C = V[2], D = V[3];
+    uint32_t E = V[4], F = V[5], G = V[6], H = V[7];
+
+    for (int j = 0; j < 64; ++j) {
+        uint32_t SS1 = ROTL32(ROTL32(A, 12) + E + ROTL32(T[j], j % 32), 7);
+        uint32_t SS2 = SS1 ^ ROTL32(A, 12);
+
+        uint32_t FF = (j < 16) ? FF0(A, B, C) : FF1(A, B, C);
+        uint32_t GG = (j < 16) ? GG0(E, F, G) : GG1(E, F, G);
+
+        uint32_t TT1 = FF + D + SS2 + W[j + 68];
+        uint32_t TT2 = GG + H + SS1 + W[j];
+
+        D = C;
+        C = ROTL32(B, 9);
+        B = A;
+        A = TT1;
+        H = G;
+        G = ROTL32(F, 19);
+        F = E;
+        E = P0(TT2);
+    }
+
+    V[0] ^= A;
+    V[1] ^= B;
+    V[2] ^= C;
+    V[3] ^= D;
+    V[4] ^= E;
+    V[5] ^= F;
+    V[6] ^= G;
+    V[7] ^= H;
+}
+
+// 传统SM3哈希计算
+void SM3Scalar(const uint8_t* data, size_t len, uint8_t digest[32]) {
+    uint32_t V[8] = {
+        0x7380166f, 0x4914b2b9, 0x172442d7, 0xda8a0600,
+        0xa96f30bc, 0x163138aa, 0xe38dee4d, 0xb0fb0e4e
+    };
+
+    size_t block_count = len / 64;
+    size_t remaining = len % 64;
+
+    for (size_t i = 0; i < block_count; i++) {
+        uint32_t W[132];
+        MessageExpansionScalar((const uint32_t*)(data + i * 64), W);
+        SM3CompressScalar(V, W);
+    }
+
+    uint8_t last_block[128] = { 0 };
+    size_t total_bits = len * 8;
+
+    if (len > 0) {
+        memcpy(last_block, data + block_count * 64, remaining);
+        last_block[remaining] = 0x80;
+
+        if (remaining < 56) {
+            last_block[60] = (total_bits >> 24) & 0xFF;
+            last_block[61] = (total_bits >> 16) & 0xFF;
+            last_block[62] = (total_bits >> 8) & 0xFF;
+            last_block[63] = total_bits & 0xFF;
+
+            uint32_t W[132];
+            MessageExpansionScalar((const uint32_t*)last_block, W);
+            SM3CompressScalar(V, W);
+        }
+        else {
+            last_block[60] = (total_bits >> 24) & 0xFF;
+            last_block[61] = (total_bits >> 16) & 0xFF;
+            last_block[62] = (total_bits >> 8) & 0xFF;
+            last_block[63] = total_bits & 0xFF;
+
+            uint32_t W1[132];
+            MessageExpansionScalar((const uint32_t*)last_block, W1);
+            SM3CompressScalar(V, W1);
+
+            memset(last_block, 0, 64);
+            uint32_t W2[132];
+            MessageExpansionScalar((const uint32_t*)last_block, W2);
+            SM3CompressScalar(V, W2);
+        }
+    }
+
+    for (int i = 0; i < 8; i++) {
+        digest[i * 4 + 0] = (V[i] >> 24) & 0xFF;
+        digest[i * 4 + 1] = (V[i] >> 16) & 0xFF;
+        digest[i * 4 + 2] = (V[i] >> 8) & 0xFF;
+        digest[i * 4 + 3] = V[i] & 0xFF;
+    }
+}
+
