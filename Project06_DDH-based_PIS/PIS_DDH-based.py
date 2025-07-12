@@ -139,3 +139,6 @@ def simulate_protocol():
     print("交集元素:", [v for v in P1_V if v in [w for w, _ in P2_W]])
     print("交集元素对应数值和:", sum(t for w, t in P2_W if w in P1_V))
     print("解密结果:", s_J)
+
+if __name__ == "__main__":
+    simulate_protocol()
