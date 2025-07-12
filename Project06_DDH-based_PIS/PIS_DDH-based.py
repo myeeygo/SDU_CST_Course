@@ -65,3 +65,77 @@ class Paillier:
         n_sq = self.n * self.n
         r = random.randint(1, self.n-1)
         return (c * pow(r, self.n, n_sq)) % n_sq
+
+def simulate_protocol():
+    # -----------------------
+    # 模拟双方输入
+    # -----------------------
+    P1_V = ["a", "b", "c","d"]          # P1的标识符集合
+    P2_W = [("f", 12),("b", 2), ("d", 5), ("e", 3)]  # P2的(标识符, 数值)对
+
+    # -----------------------
+    # Setup阶段
+    # -----------------------
+    # P1选择私钥k1
+    k1 = random.randint(1, G_q-1)  # k1 ∈ [1, G_q-1]
+
+    # P2选择私钥k2，并生成Paillier密钥对
+    k2 = random.randint(1, G_q-1)  # k2 ∈ [1, G_q-1]
+    p2_paillier = Paillier(paillier_p, paillier_q)
+    pk = (p2_paillier.n, p2_paillier.g)  # 公钥发送给P1
+    print(f"Paillier公钥: n={pk[0]}, g={pk[1]}")
+
+    # -----------------------
+    # Round 1: P1 → P2
+    # -----------------------
+    S1 = []
+    for v in P1_V:
+        h = H(v)
+        s = pow(h, k1, G_p)
+        S1.append(s)
+    random.shuffle(S1)  # 打乱顺序
+
+    # -----------------------
+    # Round 2: P2 → P1
+    # -----------------------
+    # 处理S1生成Z
+    Z = []
+    for s in S1:
+        z = pow(s, k2, G_p)
+        Z.append(z)
+    random.shuffle(Z)  # 打乱顺序
+
+    # 处理W生成T
+    T = []
+    for (w, t) in P2_W:
+        h_w = H(w)
+        h_w_k2 = pow(h_w, k2, G_p)
+        e_t = p2_paillier.encrypt(t)
+        T.append( (h_w_k2, e_t) )
+    random.shuffle(T)  # 打乱顺序
+
+    # -----------------------
+    # Round 3: P1 → P2
+    # -----------------------
+    # P1 作为加密方，仅用公钥 (n, g) 初始化 Paillier
+    p1_paillier = Paillier(n=pk[0], g=pk[1])  # 不再传入p和q
+
+    # 寻找交集并计算同态和
+    sum_e = p1_paillier.encrypt(0)  # 初始化为加密0
+    # 注意：直接比较 h_w_k1k2 in Z 存在安全风险，
+    # 实际应用中应使用零知识证明技术避免信息泄露
+    for (h_w_k2, e_t) in T:
+        h_w_k1k2 = pow(h_w_k2, k1, G_p)
+        if h_w_k1k2 in Z:
+            sum_e = p1_paillier.add(sum_e, e_t)
+    
+    # 刷新密文，增加随机性，防止通过密文模式推断明文
+    sum_e_refreshed = p1_paillier.refresh(sum_e)
+
+    # -----------------------
+    # Output: P2解密
+    # -----------------------
+    s_J = p2_paillier.decrypt(sum_e_refreshed)
+    print("交集元素:", [v for v in P1_V if v in [w for w, _ in P2_W]])
+    print("交集元素对应数值和:", sum(t for w, t in P2_W if w in P1_V))
+    print("解密结果:", s_J)
